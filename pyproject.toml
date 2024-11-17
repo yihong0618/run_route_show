@@ -1,0 +1,10 @@
+[project]
+name = "route-show"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "polyline>=2.0.2",
+    "py-staticmaps>=0.4.0",
+]
