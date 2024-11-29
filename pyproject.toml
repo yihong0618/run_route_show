@@ -1,10 +1,28 @@
 [project]
-name = "route-show"
+name = "run_route_show"
 version = "0.1.0"
-description = "Add your description here"
+description = "Default template for PDM package"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "polyline>=2.0.2",
     "py-staticmaps>=0.4.0",
+    "sqlalchemy>=2.0.36",
+]
+authors = [
+    {name = "yihong0618", email = "zouzou0208@gmail.com"},
+]
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.3",
 ]
