@@ -22,7 +22,7 @@ class Activity(Base):
     run_id = Column(Integer, primary_key=True)
     distance = Column(Float, nullable=False)
     moving_time = Column(String, nullable=False)
-    start_date = Column(String, nullable=False)
+    start_date_local = Column(String, nullable=False)
     summary_polyline = Column(String, nullable=False)
     average_speed = Column(Float, nullable=False)
 
@@ -151,9 +151,9 @@ class RouteShow:
                 line = [staticmaps.create_latlng(p[0], p[1]) for p in lines]
                 context.add_object(staticmaps.Line(line, width=3))
                 svg_image = context.render_svg(600, 600)
-                if not row.start_date or not row.distance or not row.moving_time:
+                if not row.start_date_local or not row.distance or not row.moving_time:
                     continue
-                date_str = row.start_date[:16]
+                date_str = row.start_date_local[:16]
                 svg_image.add(
                     svg_image.text(
                         date_str,
@@ -167,7 +167,6 @@ class RouteShow:
                 distance = round(row.distance / 1000, 1)
                 duration = format_run_time(str(row.moving_time))
                 pace = format_pace(float(row.average_speed or 0))
-                text: List[Tuple[str, int]]
                 if self.to_png:
                     texts = [
                         (f"{duration}", 100),
@@ -180,10 +179,10 @@ class RouteShow:
                         (f"{distance} km", 300),
                         (f"⌚ {pace}", 500),
                     ]
-                for text, x in texts:
+                for txt, x in texts:
                     svg_image.add(
                         svg_image.text(
-                            text,
+                            txt,
                             insert=(x, 560),
                             fill="black",
                             font_size="30px",
@@ -192,9 +191,7 @@ class RouteShow:
                         )
                     )
                 # filenme like 20241011_5km_30mins
-                filename = (
-                    f"{row.start_date[:10].replace('-', '')}_{distance}km_{duration}"
-                )
+                filename = f"{row.start_date_local[:10].replace('-', '')}_{distance}km_{duration}"
                 with open(f"{filename}.svg", "w", encoding="utf-8") as f:
                     svg_image.write(f, pretty=True)
                 if self.to_png:
