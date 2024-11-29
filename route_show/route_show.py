@@ -1,9 +1,13 @@
 import typing
 import math
+import os
+import time
+from tqdm import tqdm  # type: ignore
 import s2sphere  # type: ignore
 import staticmaps  # type: ignore
 import polyline  # type: ignore
 import PIL.ImageDraw
+from cairosvg import svg2png
 from typing import Tuple, Optional, List, Any
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -116,7 +120,9 @@ def format_run_time(moving_time: str) -> str:
 
 
 class RouteShow:
-    def __init__(self, database: Optional[str] = None, is_all: bool = False):
+    def __init__(
+        self, database: Optional[str] = None, is_all: bool = False, to_png: bool = False
+    ) -> None:
         if not database:
             database = "data/data.db"
         self.engine = create_engine(f"sqlite:///{database}")
@@ -124,6 +130,7 @@ class RouteShow:
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
         self.is_all = is_all
+        self.to_png = to_png
 
     def _get_activities(self) -> List[Activity]:
         if self.is_all:
@@ -137,46 +144,66 @@ class RouteShow:
 
     def generate_routes(self) -> None:
         activities: List[Activity] = self._get_activities()
-        for row in activities:
-            context = staticmaps.Context()
-            lines = polyline.decode(row.summary_polyline)
-            line = [staticmaps.create_latlng(p[0], p[1]) for p in lines]
-            context.add_object(staticmaps.Line(line))
-            svg_image = context.render_svg(600, 600)
-            if not row.start_date or not row.distance or not row.moving_time:
-                continue
-            date_str = row.start_date[:16]
-            svg_image.add(
-                svg_image.text(
-                    date_str,
-                    insert=(100, 50),
-                    fill="black",
-                    font_size="20px",
-                    font_weight="bold",
-                    text_anchor="middle",
-                )
-            )
-            distance = round(row.distance / 1000, 1)
-            duration = format_run_time(str(row.moving_time))
-            pace = format_pace(float(row.average_speed or 0))
-            texts: List[Tuple[str, int]] = [
-                (f"⏱ {duration}", 100),
-                (f"{distance} 公里", 300),
-                (f"⌚ {pace}", 500),
-            ]
-            for text, x in texts:
+        for row in tqdm(activities):
+            try:
+                context = staticmaps.Context()
+                lines = polyline.decode(row.summary_polyline)
+                line = [staticmaps.create_latlng(p[0], p[1]) for p in lines]
+                context.add_object(staticmaps.Line(line, width=3))
+                svg_image = context.render_svg(600, 600)
+                if not row.start_date or not row.distance or not row.moving_time:
+                    continue
+                date_str = row.start_date[:16]
                 svg_image.add(
                     svg_image.text(
-                        text,
-                        insert=(x, 560),
+                        date_str,
+                        insert=(100, 50),
                         fill="black",
-                        font_size="30px",
+                        font_size="20px",
                         font_weight="bold",
                         text_anchor="middle",
                     )
                 )
-            # filenme like 20241011_5km_30mins
-            filename = f"{row.start_date[:10].replace('-', '')}_{distance}km_{duration}"
-
-            with open(f"{filename}.svg", "w", encoding="utf-8") as f:
-                svg_image.write(f, pretty=True)
+                distance = round(row.distance / 1000, 1)
+                duration = format_run_time(str(row.moving_time))
+                pace = format_pace(float(row.average_speed or 0))
+                text: List[Tuple[str, int]]
+                if self.to_png:
+                    texts = [
+                        (f"{duration}", 100),
+                        (f"{distance} km", 300),
+                        (f"{pace}", 500),
+                    ]
+                else:
+                    texts = [
+                        (f"⏱ {duration}", 100),
+                        (f"{distance} km", 300),
+                        (f"⌚ {pace}", 500),
+                    ]
+                for text, x in texts:
+                    svg_image.add(
+                        svg_image.text(
+                            text,
+                            insert=(x, 560),
+                            fill="black",
+                            font_size="30px",
+                            font_weight="bold",
+                            text_anchor="middle",
+                        )
+                    )
+                # filenme like 20241011_5km_30mins
+                filename = (
+                    f"{row.start_date[:10].replace('-', '')}_{distance}km_{duration}"
+                )
+                with open(f"{filename}.svg", "w", encoding="utf-8") as f:
+                    svg_image.write(f, pretty=True)
+                if self.to_png:
+                    with open(f"{filename}.svg", "rb") as f:
+                        svg2png(f.read(), write_to=open(f"{filename}.png", "wb"))
+                        # delete the svg file
+                        os.remove(f"{filename}.svg")
+                # spider rule
+                time.sleep(0.3)
+            except Exception as e:
+                print(f"something is wrong with run {row.run_id}, just continue {e}")
+                continue
