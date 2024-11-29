@@ -1,3 +1,6 @@
+import typing
+import math
+import s2sphere  # type: ignore
 import staticmaps  # type: ignore
 import polyline  # type: ignore
 import PIL.ImageDraw
@@ -25,6 +28,58 @@ def textsize(
 ) -> Tuple[int, int]:
     x, y, w, h = self.textbbox((0, 0), *args, **kwargs)
     return w, h  # type: ignore
+
+
+# monkeypatch fix for Context zoom
+
+
+def _determine_zoom(
+    self,
+    width: int,
+    height: int,
+    b: typing.Optional[s2sphere.LatLngRect],
+    c: s2sphere.LatLng,
+) -> typing.Optional[int]:
+    if b is None:
+        b = s2sphere.LatLngRect(c, c)
+    else:
+        b = b.union(s2sphere.LatLngRect(c, c))
+    assert b
+    if b.is_point():
+        return self._clamp_zoom(15)
+
+    pixel_margin = self.extra_pixel_bounds()
+
+    w = (width - pixel_margin[0] - pixel_margin[2]) / self._tile_provider.tile_size()
+    h = (height - pixel_margin[1] - pixel_margin[3]) / self._tile_provider.tile_size()
+    # margins are bigger than target image size => ignore them
+    if w <= 0 or h <= 0:
+        w = width / self._tile_provider.tile_size()
+        h = height / self._tile_provider.tile_size()
+
+    min_y = (
+        1.0
+        - math.log(math.tan(b.lat_lo().radians) + (1.0 / math.cos(b.lat_lo().radians)))
+    ) / (2 * math.pi)
+    max_y = (
+        1.0
+        - math.log(math.tan(b.lat_hi().radians) + (1.0 / math.cos(b.lat_hi().radians)))
+    ) / (2 * math.pi)
+    dx = (b.lng_hi().degrees - b.lng_lo().degrees) / 360.0
+    if dx < 0:
+        dx += math.ceil(math.fabs(dx))
+    if dx > 1:
+        dx -= math.floor(dx)
+    dy = math.fabs(max_y - min_y)
+
+    for zoom in range(1, self._tile_provider.max_zoom()):
+        tiles = 2**zoom
+        if (dx * tiles > w) or (dy * tiles > h):
+            return self._clamp_zoom(zoom - 1)
+    return self._clamp_zoom(18)
+
+
+staticmaps.Context._determine_zoom = _determine_zoom  # type: ignore
 
 
 # Monkeypatch fix for https://github.com/flopp/py-staticmaps/issues/39
