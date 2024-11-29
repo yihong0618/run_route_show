@@ -131,7 +131,7 @@ class RouteShow:
         return (
             self.session.query(Activity)
             .order_by(Activity.run_id.desc())
-            .limit(10)
+            .limit(30)
             .all()
         )
 
