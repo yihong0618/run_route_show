@@ -25,7 +25,7 @@ def sample_activity(db_session):
         run_id=1,
         distance=5000.0,
         moving_time="00:30:00",
-        start_date="2024-01-01 10:00:00+00:00",  # Fixed date for testing
+        start_date_local="2024-01-01 10:00:00+00:00",  # Fixed date for testing
         summary_polyline="abc123",
         average_speed=2.77,
     )
@@ -48,7 +48,7 @@ def test_convert_moving_time_to_sec():
 
 def test_format_run_time():
     assert format_run_time("00:00:45") == "45s"
-    assert format_run_time("00:30:00") == "30mins"
+    assert format_run_time("00:30:00") == "30 mins"
     assert format_run_time("") == "0s"
 
 
@@ -57,6 +57,6 @@ def test_activity_model(sample_activity, db_session):
     assert activity.run_id == 1
     assert activity.distance == 5000.0
     assert activity.moving_time == "00:30:00"
-    assert activity.start_date.startswith("2024-01-01")
+    assert activity.start_date_local.startswith("2024-01-01")
     assert activity.summary_polyline == "abc123"
     assert activity.average_speed == 2.77

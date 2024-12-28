@@ -12,7 +12,7 @@ test:
 	pdm run python -m pytest
 
 clean:
-	rm -f *.png *.svg
+	rm -f output/*.png output/*.svg
 
 install:
 	pdm update
