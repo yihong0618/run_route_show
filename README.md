@@ -13,6 +13,7 @@ Make your own own run route show, for running_page and others
 2. put your [running_page](https://github.com/yihong0618/running_page) data to data/  `cp run_page/data.db data/`
 3. pdm update
 4. pdm run python -m route_show --all
-5. if you want to save it to png `pdm run python -m route_show --all --to_png`
-6. if you want to generate use duckdb `pdm run python -m route_show --use_duckdb --to_png` 2024
-7. when pngs is done you can generate video(copy  cp assets/github_2024.svg output) `pdm run python -m route_show --video` 
+5. if you want to save it to png `pdm run python -m route_show --to_png --year 2024`
+6. if you want all  `pdm run python -m route_show --to_png --all`
+7. if you want to generate use duckdb `pdm run python -m route_show --use_duckdb --to_png` 2024
+8. when pngs is done you can generate video(copy  cp assets/github_2024.svg output) `pdm run python -m route_show --video` 

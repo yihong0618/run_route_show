@@ -110,11 +110,7 @@ def create_video_from_images(image_dir, output_file):
     # migic number 40 yihong0618 did welcome to change it
     fps = len(png_files) / 60 if len(png_files) > 60 else 60
 
-    png_files_with_time = [
-        (f, os.path.getmtime(os.path.join(image_dir, f)))
-        for f in png_files
-        if f != "head.png"
-    ]
+    png_files_with_time = [(f, f.split("_")[0]) for f in png_files if f != "head.png"]
     sorted_files = [f[0] for f in sorted(png_files_with_time, key=lambda x: x[1])]
 
     if not sorted_files:
@@ -234,7 +230,7 @@ class RouteShow:
             return self.session.query(Activity).all()
         return (
             self.session.query(Activity)
-            .filter(Activity.start_date_local[:4] == self.year)
+            .filter(Activity.start_date_local.like(f"{self.year}%"))
             .order_by(Activity.run_id.desc())
             .all()
         )
