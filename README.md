@@ -1,10 +1,6 @@
 ![image](https://github.com/user-attachments/assets/285e7866-80dc-4c64-aaa7-cbbd05bf09dd)
 
 
-
-https://github.com/user-attachments/assets/d046cdfe-781d-4986-ac39-1afe8fe6d80a
-
-
 # run_route_show
 Make your own own run route show, for running_page and others
 
@@ -17,3 +13,5 @@ Make your own own run route show, for running_page and others
 6. if you want all  `pdm run python -m route_show --to_png --all`
 7. if you want to generate use duckdb `pdm run python -m route_show --use_duckdb --to_png` 2024
 8. when pngs is done you can generate video(copy  cp assets/github_2024.svg output) `pdm run python -m route_show --video` 
+
+https://github.com/user-attachments/assets/d046cdfe-781d-4986-ac39-1afe8fe6d80a
